@@ -1,17 +1,23 @@
 #! /bin/sh
-#注释$变量名#执行命令：sh fileName.sh
+#注释
+$变量名
+#执行命令：sh fileName.sh
 d = 'data +%H:%M:%S'echo "$d"
 #caculate sumecho "please input the number:"read xsum = $[$x + $x]echo "the sum is $sum"
-#sh脚本的预设变量 $0  脚本本身的名字$1  执行脚本的第一个参数$2  执行脚本的第二个参数
-#逻辑判断if 判断语句; then
+#sh脚本的预设变量 
+$0  脚本本身的名字$1  执行脚本的第一个参数$2  执行脚本的第二个参数
+#逻辑判断
+if 判断语句; then
 command
 fi######
 if 判断语句 ; then
 command
 else
 command
-fi######if((a<60)); then echo "score bigger than 60"else echo "smaller then 60"fi
-############循环结构for 变量名 in 循环的条件； do
+fi
+######if((a<60)); then echo "score bigger than 60"else echo "smaller then 60"fi
+############循环结构
+for 变量名 in 循环的条件； do
 command
 done
 #####函数########
