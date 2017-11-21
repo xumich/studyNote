@@ -23,3 +23,6 @@ Django 命令：
     python manage.py dumpdata appname > appname.json
     python manage.py loaddata appname.json
 8. python manag.py shell 项目环境终端
+
+learning link:
+https://code.ziqiangxuetang.com/django/django-models.html
