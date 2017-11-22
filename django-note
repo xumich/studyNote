@@ -11,7 +11,7 @@ Django 目录：
 
 Django 命令：
 1. python django-admin.py startproject project_name   创建项目
-2. python django-admin.py startapp app_name  创建app
+2. python manage.py startapp app_name  创建app
 3. 创建数据库表或更改数据库字段/表
     python manage.py makemigrations  创建更改的文件
     pytohon manage.py migrate  将生成的py文件应用到数据库
