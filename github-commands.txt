@@ -1,0 +1,29 @@
+-------------------git shell -------------------
+1. git config --global user.name "test"
+2. git config --global user.mail "$$@qq.com"  ***配置git账户
+3. mkdir repositoryName  ***注意本地仓库名要和git中建立的仓库名一样
+4. cd repositoryName
+5. git init 	***初始化本仓库
+6. touch README	   ***创建readme文件
+7. git add README   ***将文件添加到上传队列
+8. git commit -m "提交说明"  ***缓存提交，引号中的是对本次提交的描述，必须填写，不能为空
+9. git remote add origin https://github.com/test/repositoryName.git
+10. git pull origin master --allow-unrelated-histories
+11. git push origin master  	***将README文件上传到版本库
+ 
+---------commands----------------
+git branch 查看分支
+git branch new_branch  创建一个新的分支 new_branch
+git chekedout gh-pages 我们可以切换分支
+git checkout -b new_branch_ha   新建一个分支并且立即切换到新建的分支上
+git merge gh-pages --allow-unrelated-histories  合并分支
+
+-------------------------
+什么是分支Branch？
+我初步的理解为：GitHub仓库默认有一个master的分支，当我们在master分支开发过程中接到一个新的功能需求，我们就可以新建一个分支同步开发而互不影响，开发完成后，在合并merge到主分支master上。
+
+------------------------
+download:
+https://windows.github.com/
+study link:
+http://blog.csdn.net/chenxun_2010/article/details/43670651
