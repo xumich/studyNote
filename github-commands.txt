@@ -17,6 +17,7 @@ git branch new_branch  创建一个新的分支 new_branch
 git chekedout gh-pages 我们可以切换分支
 git checkout -b new_branch_ha   新建一个分支并且立即切换到新建的分支上
 git merge gh-pages --allow-unrelated-histories  合并分支
+git add ./   将test目录的所有文件添加至上传队列
 
 -------------------------
 什么是分支Branch？
