@@ -1,0 +1,30 @@
+commands;
+
+- name
+  win_file:
+  with_items:
+  win_unzip:
+    src:
+    dest:
+    recurse:
+    rm:
+   win_shell:
+   args:
+     executable:
+     chdir:
+    environment:
+    register:
+    uri:
+      url:
+      method:POST 
+      body:
+      user:
+      password:
+      return_content:
+      validate_certs:
+     delegate to:
+     when:
+     ignore_errors:
+     debug:
+     
+      
