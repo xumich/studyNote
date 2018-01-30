@@ -25,6 +25,11 @@ commands;
      delegate to:
      when:
      ignore_errors:
+     win_service_stat:
+     win_service:
+      name:
+      state:
+     when:
      debug:
      
  - include: ORCH{{action}}.yml
