@@ -1,5 +1,4 @@
-commands;
-
+commands:
 - name
   win_file:
   with_items:
@@ -33,5 +32,9 @@ commands;
      debug:
      
  - include: ORCH{{action}}.yml
+  
+ study link:
+ https://ansible-tran.readthedocs.io/en/latest/docs/intro_installation.html
      
+   
       
