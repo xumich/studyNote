@@ -9,3 +9,6 @@ etsn -Authentication Default -SessionOption $so -ComputerName $HostName -Credent
 #######
 Get-Service WinRM
 WinRM quickconfig
+
+$remote_ip = [System.Net.dns]::GetHostbyName($env.host).AddressList.IPAddressToString       
+$remote_host = [System.Net.dns]::GetHostbyAddress($remote_ip).HostName
