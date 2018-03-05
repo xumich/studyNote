@@ -1,0 +1,11 @@
+$UserName = ''
+$Password = ''
+$HostName = ''
+$pass = ConvertTo-SecureString -AsPlainText $Password -Force
+$Cred = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName,$pass
+#Invoke-Command -ComputerName $HostName -ScriptBlock {Get-Service WinRM} -Credential $Cred
+etsn -Authentication Default -SessionOption $so -ComputerName $HostName -Credential $Cred -UseSSL
+
+#######
+Get-Service WinRM
+WinRM quickconfig
