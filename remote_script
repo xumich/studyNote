@@ -1,0 +1,40 @@
+$content = Get-Content .\serverList.json | ConvertFrom-Json
+Write-Host "-------------------"
+#for($i=1; $i -le 2; $i++){
+#   Write-Host "$i.Remote server"#}Write-Host "please input the option you want:
+"Write-Host "1.check server status"
+Write-Host "2.Remote server"
+$option = (Read-Host "select one option" ) -as [Int]
+Write-Host "----------------------------------------"
+Write-Host "--------------servers list--------------"
+$content | foreach{ Write-Host "$($content.IndexOf($_)+1).$($_.name)"}
+$select = (Read-Host "please select one server you want to check" ) -as [Int]
+if($select){  
+$server = $content[$select-1]    
+#Write-Host $server.host $server.name $server.password $server.user       
+$hostName = $server.host    
+$userName = $server.user    
+$password = ConvertTo-SecureString -AsPlainText ($server.password) -Force
+    $so = New-PsSessionOption -SkipCACheck    
+    $Cred = New-Object System.Management.Automation.PSCredential -ArgumentList $userName,$password
+    $remote_ip = [System.Net.dns]::GetHostbyName($hostName).AddressList.IPAddressToString   
+    $serverName = [System.Net.dns]::GetHostbyAddress($remote_ip).HostName
+    if($option -eq 1)   
+    {       
+    Write-Host "checking server $hostName"=>"$serverName"          
+    Invoke-Command -ComputerName $serverName -ScriptBlock{            Param($parName = "")           
+    if($parName.Contains("AA"))            
+    {               
+    $serviceName = "TomcatAA*"    
+    }          
+    else  
+    {                
+    $serviceName = "TomcatBB*"    
+    }             
+    Get-Service -Name $serviceName       
+    } -Args "$hostName" -credential $Cred
+    }  
+    else{       
+    Write-Host "connecting server $hostName"=>"$serverName"        
+    etsn -Authentication default -SessionOption $so -ComputerName $serverName -credential $Cred    }
+}
