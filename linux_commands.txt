@@ -1,0 +1,59 @@
+linux commands:
+
+1. top
+
+2. vmstat #虚拟内存统计 
+ vmstat -m #显示slab缓存胡利用率
+ vmstat -a #获取有关活动和非活动内存页面的信息
+
+
+3. w 显示当前系统当前的用户及其进程
+  w username
+  w vivek
+
+4. uptime-Linux 系统运行了多久
+
+5. ps #显示系统进程
+   ps -a
+   ps -e
+   ps aux
+   ps axjf
+   ps -eo #显示进程的安全信息
+   ps -p PID
+   ps -auxf | sort -nr -k 3 | head -10
+
+ 6. free #内存使用情况
+
+ 7. iostat-CPU #平均负载和磁盘活动
+
+ 8. sar #监控、收集和汇报系统活动
+    #sar -n DEV | more
+
+ 9. mpstat #监控多处理器的使用情况
+    mpstat -P -ALL
+
+ 10. pmap #监控进程的内存使用情况
+     pmap -d PID
+ 
+ 11. netstat 网络统计监控工具
+     netstat -nat
+
+ 12. ss 网编统计
+     ss -t -a 
+ 
+ 13. iptraf
+ 
+ 14. tcpdump #详细的网络流量分析
+
+ 15. iotop #I/O监控
+
+ 16. htop #交互式的进程查看器
+
+ 17. atop #高级版系统与进程监控
+
+ 18. GNOME 系统监控器
+
+
+
+     
+
