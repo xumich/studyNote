@@ -1,0 +1,321 @@
+ansible组件介绍
+  1. ansible inventory
+    在大规模的配置管理工作中我们需要管理不同业务的机器，这些机器的信息都存放在ansible的inventory组件里。在我们工作中配置部署针对的主机必须先存放在inventory里，这样才能使用ansible对它进行操作。默认ansible的inventory是一个静态的ini文件/etc/ansible/hosts。亦可通过ANSIBLE_HOSTS环境变量指定或者命令运行时用-i参数临时设置。
+参考示例：
+定义主机和主机组
+1、100.0.0.1 ansible_ssh_pass='123456'
+2、100.0.0.2 ansible_ssh_pass='123456'
+3、[docker]
+4、100.0.0.1[1:3]
+5、[docker:vars]
+6、ansible_ssh_pass='123456'
+7、[ansible:children]
+8、docker
+第一、二行定义一个主机，指定ssh登录密码
+第三行定义了一个叫docker的组
+第四行定义了docker组下面四个主机从100.0.0.11-100.0.0.13
+第五、六行定义了docker组的ssh登录密码
+第七、八行定义了ansible组，ansible组包含docker组
+ 
+2.inventory内置参数
+参考 解释 例子 ansible_ssh_host 将要连接的远程主机名.与你想要设定的主机的别名不同的话,可通过此变量设置. ansible_ssh_host=192.169.1.123 ansible_ssh_port ssh端口号.如果不是默认的端口号,通过此变量设置. ansible_ssh_port=5000 ansible_ssh_user 默认的 ssh 用户名 ansible_ssh_user=cxpadmin ansible_ssh_pass ssh 密码(这种方式并不安全,我们强烈建议使用 --ask-pass 或 SSH 密钥) ansible_ssh_pass=’123456’ ansible_sudo_pass sudo 密码(这种方式并不安全,我们强烈建议使用 --ask-sudo-pass) ansible_sudo_pass=’123456’ ansible_sudo_exe sudo 命令路径(适用于1.8及以上版本) ansible_sudo_exe=/usr/bin/sudo ansible_connection 与主机的连接类型.比如:local, ssh 或者 paramiko. Ansible 1.2 以前默认使用 paramiko.1.2 以后默认使用 'smart','smart' 方式会根据是否支持 ControlPersist, 来判断'ssh' 方式是否可行. ansible_connection=local ansible_ssh_private_key_file ssh 使用的私钥文件.适用于有多个密钥,而你不想使用 SSH 代理的情况. ansible_ssh_private_key_file=/root/key ansible_shell_type 目标系统的shell类型.默认情况下,命令的执行使用 'sh' 语法,可设置为 'csh' 或 'fish'. ansible_shell_type=zsh ansible_python_interpreter 目标主机的 python 路径.适用于的情况: 系统中有多个 Python, 或者命令路径不是"/usr/bin/python",比如 \*BSD, 或者 /usr/bin/python不是 2.X 版本的 Python.我们不使用 "/usr/bin/env" 机制,因为这要求远程用户的路径设置正确,且要求 "python" 可执行程序名不可为 python以外的名字(实际有可能名为python26). ansible_python_interpreter=/usr/bin/python2.6 ansible_*_interpreter 定义其他语言解释器 ansible_*_interpreter=/usr/bin/ruby ansible_sudo 定义sudo用户 ansible_sudo=cxpadmin 
+注：从ansible2.0开始， ansible_ssh_user, ansible_ssh_host, ansible_ssh_port已经改变为ansible_user, ansible_host, ansible_port。具体参考官网http://docs.ansible.com/ansible/latest/intro_inventory.html 
+3. ansible ad-hoc命令
+    我们经常会通过命令行的形式使用ansible模块，ansible自带很多模块，可以直接使用这些模块。目前ansible已经自带了200+个模块，我们可以使用ansible-doc -l显示所有自带模块，还可以使用ansible-doc 模块名，查看模块的介绍以及案例。需要注意的是，如果使用ad-hoc命令，ansible的一些插件功能就无法使用，比如loop facts功能等。
+命令用法：ansible <host-pattern> [options]
+ 
+常用模块介绍
+① ping模块
+ping模块的作用与其名相同，即判断远程主机的网络是否畅通
+示例：ansible cluster_hosts -m ping 
+② copy模块
+copy模块在ansible里的角色就是把ansible执行机器上的文件拷贝到远程节点上。与fetch模块相反的操作。
+常用模块参数
+参数名 是否必须 默认值 选项 说明 src no     用于定位ansible执行的机器上的文件，需要绝对路径。如果拷贝的是文件夹，那么文件夹会整体拷贝，如果结尾是”/”,那么只有文件夹内的东西被考过去。一切的感觉很像rsync content no     用来替代src，用于将指定文件的内容，拷贝到远程文件内 dest yes     用于定位远程节点上的文件，需要绝对路径。如果src指向的是文件夹，这个参数也必须是指向文件夹 backup no no yes/no 备份远程节点上的原始文件，在拷贝之前。如果发生什么意外，原始文件还能使用。 directory_mode no     这个参数只能用于拷贝文件夹时候，这个设定后，文件夹内新建的文件会被拷贝。而老旧的不会被拷贝 follow no no yes/no 当拷贝的文件夹内有link存在的时候，那么拷贝过去的也会有link force no yes yes/no 默认为yes,会覆盖远程的内容不一样的文件（可能文件名一样）。如果是no，就不会拷贝文件，如果远程有这个文件 group no     设定一个群组拥有拷贝到远程节点的文件权限 mode no     等同于chmod，参数可以为“u+rwx or u=rw,g=r,o=r” owner no     设定一个用户拥有拷贝到远程节点的文件权限 
+ 
+示例：将文件copy到测试主机[root@node1 ansible]# ansible testservers -m copy -a 'src=/root/install.log dest=/tmp/install.log owner=testuser group=testgroup'192.168.100.131 | success >> { "changed": true,  "checksum": "7b3626c84bb02d12472c03d2ece878fdc4756c94",  "dest": "/tmp/install.log",  "gid": 1100,  "group": "testgroup",  "md5sum": "c7d8a01a077940859e773b7770d2e07e",  "mode": "0644",  "owner": "testuser",  "size": 9458,  "src": "/root/.ansible/tmp/ansible-tmp-1456387213.94-229503410500766/source",  "state": "file",  "uid": 1000}
+192.168.100.132 | success >> { "changed": true,  "checksum": "7b3626c84bb02d12472c03d2ece878fdc4756c94",  "dest": "/tmp/install.log",  "gid": 1100,  "group": "testgroup",  "md5sum": "c7d8a01a077940859e773b7770d2e07e",  "mode": "0644",  "owner": "testuser",  "size": 9458,  "src": "/root/.ansible/tmp/ansible-tmp-1456387213.94-186055595812050/source",  "state": "file",  "uid": 1000} 
+示例：copy 前先备份[root@node1 ansible]# echo "test " >> /root/install.log[root@node1 ansible]# ansible testservers -m copy -a 'src=/root/install.log dest=/tmp/install.log owner=testuser group=testgroup backup=yes'192.168.100.132 | success >> { "backup_file": "/tmp/install.log.2016-02-25@16:01:26~",  "changed": true,  "checksum": "b5da7af32ad02eb98f77395b28f281a965b4c1f5",  "dest": "/tmp/install.log",  "gid": 1100,  "group": "testgroup",  "md5sum": "d39956add30a18019cb5ad2381a0cd43",  "mode": "0644",  "owner": "testuser",  "size": 9464,  "src": "/root/.ansible/tmp/ansible-tmp-1456387285.87-128685659798967/source",  "state": "file",  "uid": 1000}
+192.168.100.131 | success >> { "backup_file": "/tmp/install.log.2016-02-25@16:01:26~",  "changed": true,  "checksum": "b5da7af32ad02eb98f77395b28f281a965b4c1f5",  "dest": "/tmp/install.log",  "gid": 1100,  "group": "testgroup",  "md5sum": "d39956add30a18019cb5ad2381a0cd43",  "mode": "0644",  "owner": "testuser",  "size": 9464,  "src": "/root/.ansible/tmp/ansible-tmp-1456387285.86-134452201968647/source",  "state": "file",  "uid": 1000}
+[root@node1 ansible]# ansible testservers -m raw -a 'ls -lrth /tmp/install*'192.168.100.131 | success | rc=0 >>-rw-r--r-- 1 root root 9.3K 2 25 16:00 /tmp/install.log.2016-02-25@16:01:26~-rw-r--r-- 1 testuser testgroup 9.3K 2 25 16:01 /tmp/install.log
+192.168.100.132 | success | rc=0 >>-rw-r--r-- 1 root root 9.3K 2 25 16:00 /tmp/install.log.2016-02-25@16:01:26~-rw-r--r-- 1 testuser testgroup 9.3K 2 25 16:01 /tmp/install.log 
+示例：将目录copy过去[root@node1 ansible]# tree testdirtestdir├── a│ ├── e│ │ └── ansible.cfg│ ├── f│ └── g├── b│ ├── e│ ├── f│ └── g└── c ├── ansible.cfg ├── e ├── f └── g
+[root@node1 ansible]# ansible testservers -m copy -a 'src=/etc/ansible/testdir dest=/tmp/ owner=testuser group=testgroup backup=yes'192.168.100.131 | success >> { "changed": true,  "dest": "/tmp/",  "src": "/etc/ansible/testdir"}
+192.168.100.132 | success >> { "changed": true,  "dest": "/tmp/",  "src": "/etc/ansible/testdir"}
+[root@node1 ansible]# ansible testservers -m command -a 'tree /tmp/testdir'192.168.100.131 | success | rc=0 >>/tmp/testdir|-- a| `-- e| `-- ansible.cfg|-- b| `-- e| `-- hosts`-- c `-- ansible.cfg
+5 directories, 3 files
+192.168.100.132 | success | rc=0 >>/tmp/testdir|-- a| `-- e| `-- ansible.cfg|-- b| `-- e| `-- hosts`-- c `-- ansible.cfg
+5 directories, 3 files 
+注意：发现有文件的目录copy成功，空的目录没有copy过去
+ 
+常用参数返回值
+参数名 参数说明 返回值 返回值类型 样例 src 位于ansible执行机上的位置 changed string /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source backup_file 将原文件备份 changed and if backup=yes string /path/to/file.txt.2015-02-12@22:09~ uid 在执行后，拥有者的ID success int 100 dest 远程节点的目标目录或文件 success string /path/to/file.txt checksum 拷贝文件后的checksum值 success string 6e642bb8dd5c2e027bf21dd923337cbb4214f827 md5sum 拷贝文件后的md5 checksum值 when supported string 2a5aeecc61dc98c4d780b14b330e3282 state 执行后的状态 success string file gid 执行后拥有文件夹、文件的群组ID success int 100 mode 执行后文件的权限 success string 0644 owner 执行后文件所有者的名字 success string httpd group 执行后文件所有群组的名字 success string httpd size 执行后文件大小 success int 1220 
+ 
+③ shell模块
+它负责在被ansible控制的节点（服务器）执行命令行。shell 模块是通过/bin/sh进行执行，所以shell 模块可以执行任何命令，就像在本机执行一样。
+常用参数
+参数 是否必须 默认值 选项 说明 chdir no     跟command一样的，运行shell之前cd到某个目录 creates no     跟command一样的，如果某个文件存在则不运行shell removes no     跟command一样的，如果某个文件不存在则不运行shell 
+ 
+示例1: 
+让所有节点运行somescript.sh并把log输出到somelog.txt。
+$ ansible -i hosts all -m shell -a "sh somescript.sh >> somelog.txt"
+示例2: 
+先进入somedir/ ，再在somedir/目录下让所有节点运行somescript.sh并把log输出到somelog.txt。
+$ ansible -i hosts all -m shell -a "somescript.sh >> somelog.txt" chdir=somedir/
+示例3: 
+先cd到某个需要编译的目录，执行condifgure然后,编译，然后安装。
+$ ansible -i hosts all -m shell -a "./configure && make && make insatll" chdir=/xxx/yyy/
+ 
+④ command模块
+command 模块用于运行系统命令。不支持管道符和变量等（"<", ">", "|", and "&"等），如果要使用这些，那么可以使用shell模块。在使用ansible中的时候，默认的模块是-m command，从而模块的参数不需要填写，直接使用即可。
+常用参数
+参数 是否必须 默认值 选项 说明 chdir no     运行command命令前先cd到这个目录 creates no     如果这个参数对应的文件存在，就不运行command executable no     将shell切换为command执行，这里的所有命令需要使用绝对路径 removes no     如果这个参数对应的文件不存在，就不运行command 
+示例1：
+#ansible 命令调用command: ansible -i hosts all -m command -a "/sbin/shutdown -t now"
+ansible命令行调用-m command模块 -a表示使用参数 “”内的为执行的command命令，该命令为关机。 
+那么对应的节点(192.168.10.12,127.152.112.13)都会执行关机。
+示例2：
+# Run the command if the specified file does not exist. ansible -i hosts all -m command -a "/usr/bin/make_database.sh arg1 arg2 creates=/path/to/database"
+利用creates参数，判断/path/to/database这个文件是否存在，存在就跳过command命令，不存在就执行command命令。
+ 
+⑤ raw模块
+raw模块的功能与shell和command类似。但raw模块运行时不需要在远程主机上配置python环境。
+示例：
+在10.1.1.113节点上运行hostname命令
+ansible 10.1.1.113 -m raw-a 'hostname|tee'
+ 
+⑥ fetch模块
+文件拉取模块主要是将远程主机中的文件拷贝到本机中，和copy模块的作用刚刚相反，并且在保存的时候使用hostname来进行保存，当文件不存在的时候，会出现错误，除非设置了选项fail_on_missing为yes
+ 常用参数
+参数 必填 默认值 选项 说明 Dest Yes     用来存放文件的目录，例如存放目录为backup，源文件名称为/etc/profile在主机pythonserver中，那么保存为/backup/pythonserver/etc/profile Fail_on_missing No No Yes/no 当源文件不存在的时候，标识为失败 Flat No     允许覆盖默认行为从hostname/path到/file的，如果dest以/结尾，它将使用源文件的基础名称 Src Yes     在远程拉取的文件，并且必须是一个file，不能是目录 Validate_checksum No Yes Yes/no 当文件fetch之后进行md5检查 
+示例1：
+fetch一个文件保存，src表示为远程主机上需要传送的文件路径，dest表示为本机上的路径，在传送过来的文件，是按照IP地址进行分类，然后路径是源文件的路径。在拉取文件的时候，必须拉取的是文件，不能拉取文件夹。
+[root@ansibleserver ~]# ansible pythonserver -m fetch -a "src=/root/123 dest=/root"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "dest": "/root/192.168.1.60/root/123",
+    "md5sum": "31be5a34915d52fe0a433d9278e99cac",
+    "remote_md5sum": "31be5a34915d52fe0a433d9278e99cac"
+}
+示例2：
+指定路径目录进行保存。在使用参数为flat的时候，如果dest的后缀名为/，那么就会保存在目录中，然后直接保存为文件名；当dest后缀不为/的时候，那么就会直接保存为kel的文件。主要是在于dest是否已/结尾，从而来区分这是个目录还是路径。
+[root@ansibleserver ~]# ansible pythonserver -m fetch -a "src=/root/Ssh.py dest=/root/kel/ flat=yes"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "dest": "/root/kel/Ssh.py",
+    "md5sum": "63f8a200d1d52d41f6258b41d7f8432c",
+    "remote_md5sum": "63f8a200d1d52d41f6258b41d7f8432c"
+} 
+⑦ file模块
+主要用来设置文件、链接、目录的属性，或者移除文件、链接、目录，很多其他的模块也会包含这种作用，例如copy，assemble和template。
+常用参数
+参数 必填 默认 选项 说明 Follow No No Yes/no 这个标识说明这是系统链接文件，如果存在，应该遵循 Force No No Yes/no 强制创建链接在两种情况下：源文件不存在（过会会存在）；目标存在但是是文件（创建链接文件替代） Group No     文件所属用户组 Mode No     文件所属权限 Owner No     文件所属用户 Path Yes     要控制文件的路径 Recurse No No Yes/no 当文件为目录时，是否进行递归设置权限 Src No     文件链接路径，只有状态为link的时候，才会设置，可以是绝对相对不存在的路径 State No File File/linkDirectoryHard/touchAbsent 如果是目录不存在，那么会创建目录；如果是文件不存在，那么不会创建文件；如果是link，那么软链接会被创建或者修改；如果是absent，那么目录下的所有文件都会被删除，如果是touch，会创建不存在的目录和文件 
+示例1：
+设置文件属性。文件路径为path，表示文件路径，设定所属用户和所属用户组，权限为0644。文件路径为path，使用文件夹进行递归修改权限，使用的参数为recurse表示为递归。
+[root@ansibleserver ~]# ansible pythonserver -m file -a "path=/root/123 owner=kel group=kel mode=0644"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "gid": 500,
+    "group": "kel",
+    "mode": "0644",
+    "owner": "kel",
+    "path": "/root/123",
+    "size": 294,
+    "state": "file",
+    "uid": 500
+}
+[root@ansibleserver ~]# ansible pythonserver -m file -a "path=/tmp/kel/ owner=kel group=kel mode=0644 recurse=yes"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "gid": 500,
+    "group": "kel",
+    "mode": "0644",
+    "owner": "kel",
+    "path": "/tmp/kel/",
+    "size": 4096,
+    "state": "directory",
+    "uid": 500
+}
+示例2：
+创建目录。创建目录，使用的参数主要是state为directory。
+[root@ansibleserver ~]# ansible pythonserver -m file -a "path=/tmp/kel state=directory mode=0755"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "gid": 0,
+    "group": "root",
+    "mode": "0755",
+    "owner": "root",
+    "path": "/tmp/kel",
+    "size": 4096,
+    "state": "directory",
+    "uid": 0
+}
+示例3：
+修改权限。直接使用mode来进行修改权限。
+[root@ansibleserver ~]# ansible pythonserver -m file -a "path=/tmp/kel mode=0444"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "gid": 0,
+    "group": "root",
+    "mode": "0444",
+    "owner": "root",
+    "path": "/tmp/kel",
+    "size": 4096,
+    "state": "directory",
+    "uid": 0
+}
+示例4：
+创建软连接。 src表示已经存在的文件，dest表示创建的软连接的文件名，最后的state状态为link。
+root@ansibleserver tmp]# ansible pythonserver -m file -a "src=/tmp/1 dest=/tmp/2 owner=kel state=link"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "dest": "/tmp/2",
+    "gid": 0,
+    "group": "root",
+    "mode": "0777",
+    "owner": "kel",
+    "size": 6,
+    "src": "/tmp/1",
+    "state": "link",
+    "uid": 500
+}
+ 
+⑧ yum模块
+Yum（全称为 Yellow dog Updater, Modified）是一个在Fedora和RedHat以及CentOS中的Shell前端软件包管理器。即安装包管理模块。
+常用参数
+参数名 是否必须 默认值 选项值 参数说明 conf_file no     设定远程yum执行时所依赖的yum配置文件 disable_gpg_check no No Yes/No 在安装包前检查包，只会影响state参数为present或者latest的时候 list No     只能由ansible调用，不支持playbook，这个干啥的大家都懂 name Yes     你需要安装的包的名字，也能如此使用name=python=2.7安装python2.7 state no present present/latest/absent 用于描述安装包最终状态，present/latest用于安装包，absent用于remove安装包 update_cache no no yes/no 用于安装包前执行更新list,只会影响state参数为present/latest的时候 
+示例1：
+安装httpd包
+ansible host31 -m yum -a “name=httpd” 
+host31 | SUCCESS => { 
+“changed”: true, 
+“msg”: “”, 
+“rc”: 0, 
+“results”: [ xxxxx ]
+示例2：
+删除httpd包
+ansible host31 -m yum -a "name=httpd state=absent" host31 | SUCCESS => { "changed": true, "msg": "", "rc": 0, "results": [ xxxx ] 
+⑨ service模块
+service模块其实就是linux下的service命令。用于service服务管理。
+常用参数
+参数名 是否必须 默认值 选项 说明 enabled no   yes/no 启动os后启动对应service的选项。使用service模块的时候，enabled和state至少要有一个被定义 name yes     需要进行操作的service名字 state no   stared/stoped/restarted/reloaded service最终操作后的状态。 
+示例1：
+启动服务。
+ansible host31 -m service -a "name=httpd state=started" host31 | SUCCESS => { "changed": true, "name": "httpd", "state": "started" }
+示例2：
+停止服务。
+ansible host31 -m service -a "name=httpd state=stopped" host31 | SUCCESS => { "changed": true, "name": "httpd", "state": "stopped" }
+示例3：
+设置服务开机自启动。
+[root@host31 ~]# ansible host31 -m service -a "name=httpd enabled=yes state=restarted" host31 | SUCCESS => { "changed": true, "enabled": true, "name": "httpd", "state": "started" }
+ 
+⑩ cron模块
+cron模块用于管理计划任务。
+参数名 是否必须 默认值 选项 说明 backup       对远程主机上的原任务计划内容修改之前做备份 cron_file       如果指定该选项，则用该文件替换远程主机上的cron.d目录下的用户的任务计划 day       日（1-31，*，*/2,……） hour       小时（0-23，*，*/2，……） minute       分钟（0-59，*，*/2，……） month       月（1-12，*，*/2，……） weekday       周（0-7，*，……） job       要执行的任务，依赖于state=present name       该任务的描述 special_time       指定什么时候执行，参数：reboot,yearly,annually,monthly,weekly,daily,hourly state       确认该任务计划是创建还是删除 user       以哪个用户的身份执行 
+示例：
+ansible test -m cron -a 'name="a job for reboot" special_time=reboot job="/some/job.sh"'
+ansible test -m cron -a 'name="yum autoupdate" weekday="2" minute=0 hour=12 user="root
+ansible test -m cron  -a 'backup="True" name="test" minute="0" hour="5,2" job="ls -alh > /dev/null"'
+ansilbe test -m cron -a 'cron_file=ansible_yum-autoupdate state=absent'
+ 
+①① user模块
+user模块是请求的是useradd, userdel, usermod三个指令。
+常用参数
+参数名 是否必须 默认值 选项 说明 home       指定用户的家目录，需要与createhome配合使 groups       指定用户的属组 uid       指定用的uid password       指定用户的密码 name       指定用户名 createhome       是否创建家目录 yes|no system       是否为系统用户 remove       当state=absent时，remove=yes则表示连同家目录一起删除，等价于userdel -r state       是创建还是删除 shell       指定用户的shell环境 
+指定password参数时，不能使用明文密码，因为后面这一串密码会被直接传送到被管理主机的/etc/shadow文件中，所以需要先将密码字符串进行加密处理。然后将得到的字符串放到password中即可。不同的发行版默认使用的加密方式可能会有区别，具体可以查看/etc/login.defs文件确认，centos 6.5版本使用的是SHA512加密算法。
+示例1：
+目的：在指定节点上创建一个用户名为nolinux，组为nolinux的用户
+命令：ansible 10.1.1.113 -m user -a 'name=nolinux groups=nolinux state=present'
+执行命令：
+
+示例2：
+删除用户
+命令：ansible 10.1.1.113 -m user -a 'name=nolinux groups=nolinux state=absent remove=yes'
+ ①②group模块
+goup模块请求的是groupadd, groupdel, groupmod 三个指令。参数参考ansible-hoc group
+示例：
+目的：在所有节点上创建一个组名为nolinux，gid为2014的组
+命令：ansible all -m group -a 'gid=2014 name=nolinux'
+①③script模块
+script模块将控制节点的脚本执行在被控节点上。
+示例：
+[root@host31 ~]# ansible host32 -m script -a /tmp/hello.sh host32 | SUCCESS => { "changed": true, "rc": 0, "stderr": "", "stdout": "this is test from host32\r\n", "stdout_lines": [ "this is test from host32" ->执行结果 ] }
+ ①④get_url模块
+该模块主要用于从http、ftp、https服务器上下载文件（类似于wget）
+常用参数
+参数名 是否必须 默认值 选项 说明 sha256sum       下载完成后进行sha256 check； timeout       下载超时时间，默认10s url       下载的URL url_password、url_username       主要用于需要用户名密码进行验证的情况 use_proxy       是事使用代理，代理需事先在环境变更中定义 
+示例：
+目的：将http://10.1.1.116/favicon.ico文件下载到指定节点的/tmp目录下
+命令：ansible 10.1.1.113 -m get_url -a 'url=http://10.1.1.116/favicon.ico dest=/tmp'
+ ①⑤synchronize模块
+使用rsync同步文件。
+参数名 是否必须 默认值 选项 说明 archive       归档，相当于同时开启recursive(递归)、links、perms、times、owner、group、-D选项都为yes ，默认该项为开启 checksum       跳过检测sum值，默认关闭 compress       是否开启压缩 copy_links       复制链接文件，默认为no ，注意后面还有一个links参数 delete       删除不存在的文件，默认no dest       目录路径 dest_port       dest_port：默认目录主机上的端口 ，默认是22，走的ssh协议 dirs       传速目录不进行递归，默认为no，即进行目录递归 rsync_opts       rsync参数部分 set_remote_user       主要用于/etc/ansible/hosts中定义或默认使用的用户与rsync使用的用户不同的情况 mode       push或pull 模块，push模的话，一般用于从本机向远程主机上传文件，pull 模式用于从远程主机上取文件 
+示例1：
+目的：将主控方/root/a目录推送到指定节点的/tmp目录下
+命令：ansible 10.1.1.113 -m synchronize -a 'src=/root/a dest=/tmp/ compress=yes' delete=yes   使两边的内容一样（即以推送方为主）
+compress=yes  开启压缩，默认为开启
+--exclude=.Git  忽略同步.git结尾的文件
+由于模块，默认都是推送push。因此，如果你在使用拉取pull功能的时候，可以参考如下来实现
+mode=pull   更改推送模式为拉取模式
+示例2：
+目的：将10.1.1.113节点的/tmp/a目录拉取到主控节点的/root目录下
+命令：ansible 10.1.1.113 -m synchronize -a 'mode=pull src=/tmp/a dest=/root/' 
+示例3：
+由于模块默认启用了archive参数，该参数默认开启了recursive, links, perms, times, owner，group和-D参数。如果你将该参数设置为no，那么你将停止很多参数，比如会导致如下目的递归失败，导致无法拉取
+ 
+①⑥ 其他模块：
+mount模块：配置挂载点
+unarchive模块：解压文件模块 
+本文的模块简介仅供参考，要想更好更简便的使用，请多参考官网的帮助文档http://docs.ansible.com/ansible/latest/intro_adhoc.html 或者使用ansible-hoc 模块名查看。网络上的中文文档更新不是很频繁，不建议阅读，建议阅读官方英文文档。
+三、核心模块playbook介绍
+ansible的playbook的文件格式为YAML格式，所以希望大家在学习playbook之前先对YAML语法有一定的了解，否则在运行playbook的过程中会经常碰到莫名其妙的语法错误。
+ 
+这边以一个例子简单介绍一下playbook。
+示例目的：指定一个主机名，对这个主机进行配置操作。
+先展示目录结构
+config-ansible
+    |___config_hosts.yml
+    |___roles
+             |___config_hosts
+                        |___tasks
+                                |___main.yml
+                                |___config.yml
+总共3个YAML文件，其中config_hosts.yml为总入口，在这个文件里调用roles/config_hosts/tasks目录下的脚本。执行命令ansible-playbook config_hosts.yml 运行剧本。
+config_hosts.yml内容为
+1. ---
+2. - hosts: node1
+3. roles:
+4. - config_hosts
+ 
+第1行表示该文件是YAML文件，非必须。
+第2行定义该playbook针对的目标主机。
+第3、4行指定角色目录，具体操作在角色中定义。
+main.yml的内容为
+1. ---
+2. - include: config.yml
+第2行指定此roles要导入的task文件。
+config.yml的内容为
+1. ---
+2. - name: copy test.file
+3. copy:
+4. src: /home/test.file
+5. dest: /home/test.file
+6. owner: root
+7. group: root
+8. mode: 0777
+9. force: yes
+10.
+11. - name: exec hello world script
+12. script: /home/helloworld.sh
+13.
+14.- name: rm test.file
+15. file: path=/home/test.file state=absent
+config.yml文件内的代码才是真正执行的任务代码。总共有3个任务，第一个把/home目录的test.file文件拷贝到目标主机的相同路径下，第二个在目标主机执行/home目录下的helloworld.sh，helloworld.sh的内容就是打印一条helloworld信息，第三个任务是使用file模块把目标主机的/home/test.file文件删除。 
+其实playbook就是各个模块的组装，此处只是抛砖引玉，其他模块在playbook中的使用可自行学习，就不再介绍循环、条件判断等功能的实现了。关于ansible playbook的目录结构可以参考http://docs.ansible.com/ansible/latest/playbooks_roles.html#dynamic-versus-static-includes 或者 https://github.com/ceph/ceph-ansible
