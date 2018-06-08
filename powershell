@@ -12,3 +12,7 @@ WinRM quickconfig
 
 $remote_ip = [System.Net.dns]::GetHostbyName($env.host).AddressList.IPAddressToString       
 $remote_host = [System.Net.dns]::GetHostbyAddress($remote_ip).HostName
+
+
+---
+Get-Item symlink.Target #读取快捷键的目标路径
